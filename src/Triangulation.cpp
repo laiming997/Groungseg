@@ -18,9 +18,10 @@ Triangulation::Triangulation(boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ>> c
 }
 
 
-boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ>> Triangulation::triangulation_process(std::vector<cv::Point3f> seed_points)
+std::tuple<boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ>>,pcl::PointIndices> Triangulation::triangulation_process(pcl::PointIndices gound_indices,std::vector<cv::Point3f> seed_points)
 {
     boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ>> ground_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+
     std::vector<GEOM_FADE25D::Point2> vInputPoints;
     for (int i = 0; i < seed_points.size(); i++)
     {
@@ -33,10 +34,44 @@ boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ>> Triangulation::triangulation_p
     GEOM_FADE25D::Triangle2 *temp_TR;
     GEOM_FADE25D::Vector2   temp_norm;
     GEOM_FADE25D::Point2    temp_pointO;
-    
-    for (pcl::PointCloud<pcl::PointXYZ>::iterator it = origin_cloud->points.begin(); it != origin_cloud->points.end(); it++)
+    // int index = 0;
+//     for (pcl::PointCloud<pcl::PointXYZ>::iterator it = origin_cloud->points.begin(); it != origin_cloud->points.end(); it++)
+//     {
+//         GEOM_FADE25D::Point2 P(it->x, it->y , it->z);
+//         temp_TR = pDt->locate(P);//定位到包含p点的三角形
+//         if( temp_TR != NULL)
+//         {
+//             temp_norm = temp_TR->getNormalVector();//获得三角形平面的归一化法向量
+//             temp_pointO = temp_TR->getBarycenter();//获得三角形的重心点O
+//             /*Point projected onto the plane of the triangle*/
+//             GEOM_FADE25D::Vector2 temp_PO(P - temp_pointO);//得到向量PO
+//             double dist = (temp_PO.x() * temp_norm.x()) + (temp_PO.y() * temp_norm.y()) + (temp_PO.z() * temp_norm.z());//将向量PO向法向量投影，得到P到三角形的垂距
+//             GEOM_FADE25D::Point2 proj_P = GEOM_FADE25D::Point2(P - (dist*temp_norm));//将p点投影到三角形平面内
+            
+//             /*Compute the normal distance to the surface of the triangle*/
+//             double dis_N = sqrt(pow(proj_P.x() - P.x(), 2) + pow(proj_P.y() - P.y(), 2) + pow(proj_P.z() - P.z(), 2));
+//             /*Compute the angles to the three vertices of the triangle*/
+//             double dis_P0 = sqrt(pow(P.x() -temp_TR->getCorner(0)->x(), 2) + pow(P.y() - temp_TR->getCorner(0)->y(), 2) + pow(P.z() - temp_TR->getCorner(0)->z(), 2));
+//             double dis_P1 = sqrt(pow(P.x() -temp_TR->getCorner(1)->x(), 2) + pow(P.y() - temp_TR->getCorner(1)->y(), 2) + pow(P.z() - temp_TR->getCorner(1)->z(), 2));
+//             double dis_P2 = sqrt(pow(P.x() -temp_TR->getCorner(2)->x(), 2) + pow(P.y() - temp_TR->getCorner(2)->y(), 2) + pow(P.z() - temp_TR->getCorner(2)->z(), 2));
+            
+//             /*Convert the angles to radiuans*/
+//             double alpha = asin(dis_N / dis_P0) * Rad2deg;//弧度变角度
+//             double beta  = asin(dis_N / dis_P1) * Rad2deg;
+//             double gamma = asin(dis_N / dis_P2) * Rad2deg;
+            
+//             if(alpha < Angle_threshold && beta < Angle_threshold && gamma < Angle_threshold && dis_N < Distance_threshold)
+//             {
+//                 pDt->insert(GEOM_FADE25D::Point2(it->x, it->y , it->z));
+//                 ground_cloud -> push_back(pcl::PointXYZ(it->x, it->y , it->z));
+// /*              int index = it->data
+//                 gound_indices.indices.push_back(); */
+//             }
+//         }
+//     }
+    for (int i = 0; i < origin_cloud->size(); i++)
     {
-        GEOM_FADE25D::Point2 P(it->x, it->y , it->z);
+        GEOM_FADE25D::Point2 P(origin_cloud->at(i).x, origin_cloud->at(i).y,origin_cloud->at(i).z);
         temp_TR = pDt->locate(P);//定位到包含p点的三角形
         if( temp_TR != NULL)
         {
@@ -61,11 +96,13 @@ boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ>> Triangulation::triangulation_p
             
             if(alpha < Angle_threshold && beta < Angle_threshold && gamma < Angle_threshold && dis_N < Distance_threshold)
             {
-                pDt->insert(GEOM_FADE25D::Point2(it->x, it->y , it->z));
-                ground_cloud -> push_back(pcl::PointXYZ(it->x, it->y , it->z));
+                pDt->insert(GEOM_FADE25D::Point2(P));
+                ground_cloud -> push_back(origin_cloud->points[i]);
+                gound_indices.indices.push_back(i); 
             }
         }
     }
+    
     printf("the size of the ground points after TIN Iteration: %zd\n", ground_cloud->size());
-    return ground_cloud;
+    return std::make_tuple(ground_cloud,gound_indices);
 }

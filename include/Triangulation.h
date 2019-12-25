@@ -13,7 +13,7 @@ private:
     
 public: 
     boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ>> origin_cloud;
-    boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ>> triangulation_process(std::vector<cv::Point3f> seed_points);
+    std::tuple<boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ>>,pcl::PointIndices> triangulation_process(pcl::PointIndices gound_indices,std::vector<cv::Point3f> seed_points);
 public:
     Triangulation();
     Triangulation(boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ>> cloud_in, double angle_threshold, double distance_threshold);

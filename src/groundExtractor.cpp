@@ -47,22 +47,34 @@ int main(int argc, char const *argv[])
 	printf("angle_threshold:%lf\n",angle_threshold);
 	printf("distance_threshold:%lf\n",distance_threshold);
 	
-	Morphology mor_filt(cloud_in,param);
+	Morphology mor_filt(cloud_in,param);//建立数学形态学滤波器的对象
 	std::vector<cv::Point3f> vec3,pmr_vec3;
 	pcl::PointIndices gound_indices;
 	std::tie(vec3,gound_indices) = mor_filt.My_ExtractGroundSeed();//自己写的渐进式数学形态学滤波器
 	Triangulation PDT_filter(cloud_in,angle_threshold,distance_threshold);//对数学形态学滤波器获得地面点的种子点后，进行TIN不规则三角网迭代
-	PDT_filter.triangulation_process(vec3);
-	// pmr_vec3 = mor_filt.ExtractSeedByPCL();
+	boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ>> cloud_groundTIN(new pcl::PointCloud<pcl::PointXYZ>);
+	std::tie(cloud_groundTIN,gound_indices) = PDT_filter.triangulation_process(gound_indices,vec3);
 	
+	pcl::ExtractIndices<pcl::PointXYZ> filter;
+	pcl::PointIndices::Ptr ground_indices_ptr(new pcl::PointIndices);
+	std::vector<int> obj_indices;
+	for (int i = 0; i<gound_indices.indices.size();i++)
+	{
+		ground_indices_ptr->indices.push_back(gound_indices.indices[i]);
+	}
 	
+	filter.setInputCloud(cloud_in);
+	filter.setIndices(ground_indices_ptr);
+	filter.setNegative(true);
+	filter.filter(obj_indices);
+	cout<< "obj_indices" << obj_indices.size()<<endl;
 	// 错误率计算
-	double type_1_error = 0.0, type_2_error = 0.0;
-	pcl::PointCloud<pcl::PointXYZL> my_seg_cloud;
-	pcl::PointIndices non_gound_indices;
+	cout << "/**********************Precision analysis************************************/"<<endl;
+	pcl::PointIndices::Ptr ground2obj_index(new pcl::PointIndices);
+	pcl::PointIndices::Ptr obj2ground_index(new pcl::PointIndices);
+	double type_1_error = 0.0, type_2_error = 0.0, total_error = 0.0;
 	int ground_num_truth=0,object_num_truth=0;
 	int ground2obj=0,obj2ground=0;
-	bool flag=false;
 	for (int i = 0; i <cloud_filter->size();i++)
 	{
 		if(cloud_filter->points[i].label ==1)
@@ -73,46 +85,50 @@ int main(int argc, char const *argv[])
 		{//地面点真值
 			ground_num_truth++;
 		}
-		// // for (int j = 0; j < gound_indices.indices.size(); j++)
-		// // {
-		// // 	if(i == gound_indices.indices[j])
-		// // 	{//该索引号在滤波后地面点的索引号里
-		// // 		flag = true;
-		// // 	}
-		// // }
-		// if(flag == false)
-		// {
-		// 	non_gound_indices.indices.push_back(i);
-		// }
-		// else flag = false; 
 	}
-	cout << "non_gound_indices:" << non_gound_indices.indices.size()<<endl;
+	for (int i = 0; i <obj_indices.size(); i++)
+	{
+		if(cloud_filter->points[obj_indices[i]].label ==0)
+		{//把地面点识别成地物点
+			ground2obj++;
+			ground2obj_index->indices.push_back(obj_indices.at(i));
+		}
+	}	
 	for (int i = 0; i <gound_indices.indices.size(); i++)
 	{
 		if(cloud_filter->points[gound_indices.indices[i]].label ==1)
 		{//把地物点识别成地面点
 			obj2ground++;
+			obj2ground_index->indices.push_back(gound_indices.indices.at(i));
 		}
-	}	
-	cout <<"object_num_truth" << object_num_truth<<endl;
-	cout <<"ground_num_truth" << ground_num_truth<<endl;
-	cout << "obj2ground:" << obj2ground<<endl;
-	// 可视化
-	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_view(new pcl::PointCloud<pcl::PointXYZ>);
-	// pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_pmr(new pcl::PointCloud<pcl::PointXYZ>);
-	for (int i = 0; i < vec3.size(); i++)
-	{
-		cloud_view->push_back(pcl::PointXYZ(vec3[i].x,vec3[i].y,vec3[i].z));
 	}
-	// for (int i = 0; i < pmr_vec3.size(); i++)
-	// {
-	// 	cloud_pmr->push_back(pcl::PointXYZ(pmr_vec3[i].x,pmr_vec3[i].y,pmr_vec3[i].z));
-	// }
+	type_1_error = float(ground2obj)/float(ground_num_truth);
+	type_2_error = float(obj2ground)/float(object_num_truth);
+	total_error  = float(ground2obj+obj2ground)/float(cloud_filter->size());
+	cout <<"object_num_truth:" << object_num_truth<<endl;
+	cout <<"ground_num_truth:" << ground_num_truth<<endl;
+	cout << "obj2ground:" << obj2ground<<endl;
+	cout << "ground2obj:" << ground2obj<<endl;
+	printf("type_1_error:%f\n",type_1_error);
+	printf("type_2_error:%f\n",type_2_error);
+	printf("total_error:%f\n",total_error);
+	// 可视化
+	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_ground2obj (new pcl::PointCloud<pcl::PointXYZ>);
+	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_obj2ground (new pcl::PointCloud<pcl::PointXYZ>);
+	pcl::ExtractIndices<pcl::PointXYZ> get_error_points;
+	get_error_points.setInputCloud(cloud_in);
+	get_error_points.setIndices(ground2obj_index);
+	get_error_points.filter(*cloud_ground2obj);
+	get_error_points.setIndices(obj2ground_index);
+	get_error_points.filter(*cloud_obj2ground);
+	
 	pcl::visualization::PCLVisualizer viewer("view");
-	pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> cloud_viewer_handler(cloud_view, 255, 0, 0); // green
-	pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> cloud_pmr_handler(Ground_cloud.makeShared(), 0, 255, 0); // green
-	viewer.addPointCloud<pcl::PointXYZ>(cloud_view,cloud_viewer_handler,"cloud_view");
-	viewer.addPointCloud<pcl::PointXYZ>(Ground_cloud.makeShared(),cloud_pmr_handler,"cloud_pmr");
+	pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> cloud_viewer_handler(cloud_groundTIN, 255, 255, 255); // green
+	pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> cloud_g2o_handler(cloud_ground2obj, 255, 0, 0); // green
+	pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> cloud_o2g_handler(cloud_obj2ground, 0, 255, 0); // green
+	viewer.addPointCloud<pcl::PointXYZ>(cloud_groundTIN,cloud_viewer_handler,"cloud_view");
+	viewer.addPointCloud<pcl::PointXYZ>(cloud_ground2obj,cloud_g2o_handler,"cloud_ground2obj");
+	viewer.addPointCloud<pcl::PointXYZ>(cloud_obj2ground,cloud_o2g_handler,"cloud_obj2ground");
 	viewer.spin();
 	system("PAUSE");
     return 0;
