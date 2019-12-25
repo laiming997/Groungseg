@@ -124,7 +124,7 @@ int main(int argc, char const *argv[])
 	
 	pcl::visualization::PCLVisualizer viewer("view");
 	pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> cloud_viewer_handler(cloud_groundTIN, 255, 255, 255); // green
-	pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> cloud_g2o_handler(cloud_ground2obj, 255, 0, 0); // green
+	pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> cloud_g2o_handler(cloud_ground2obj, 255, 0, 0); // red
 	pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> cloud_o2g_handler(cloud_obj2ground, 0, 255, 0); // green
 	viewer.addPointCloud<pcl::PointXYZ>(cloud_groundTIN,cloud_viewer_handler,"cloud_view");
 	viewer.addPointCloud<pcl::PointXYZ>(cloud_ground2obj,cloud_g2o_handler,"cloud_ground2obj");
