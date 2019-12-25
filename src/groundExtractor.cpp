@@ -120,7 +120,7 @@ int main(int argc, char const *argv[])
 	get_error_points.setIndices(ground2obj_index);
 	get_error_points.filter(*cloud_ground2obj);
 	get_error_points.setIndices(obj2ground_index);
-	get_error_points.filter(*cloud_obj2ground);
+	get_error_points.filter(*cloud_obj2ground);//获得错误点
 	
 	pcl::visualization::PCLVisualizer viewer("view");
 	pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> cloud_viewer_handler(cloud_groundTIN, 255, 255, 255); // green
