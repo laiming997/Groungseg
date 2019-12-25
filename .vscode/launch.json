@@ -1,0 +1,20 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?   linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Launch Debug", //名称
+            "type": "cppvsdbg", //调试类型，除使用msvc外，均为该类型
+            "request": "launch",
+            "program": "${workspaceFolder}/build/Groundseg.exe", //程序位置
+            "args": ["E:/point_cloud/opensource_data/samp12.txt","E:/point_cloud/Groundseg/Config.txt"], //启动参数
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}", //工作目录
+            // "preLaunchTask": "build debug", //运行调试前的前置任务，编译
+            "environment": [],
+            "externalConsole": true
+        }
+    ]
+}

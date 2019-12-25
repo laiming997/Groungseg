@@ -1,0 +1,28 @@
+cmake_minimum_required(VERSION 3.16)
+project(Groundseg)
+set(CMAKE_CXX_STANDARD 11)
+
+#opencv库相关
+set(OpenCV_DIR D:/opencv4.1.2/opencv/build/x64/vc15/lib)
+find_package(OpenCV 4.1.2 REQUIRED)
+include_directories(D:/opencv4.1.2/opencv/build/include)    #添加头文件目录
+#pcl库相关
+find_package(PCL 1.9.1 REQUIRED)
+if (PCL_FOUND)
+    include_directories(${PCL_INCLUDE_DIRS})
+    link_directories(${PCL_LIBRARY_DIRS})
+    add_definitions(${PCL_DEFINITIONS})
+    include(${VTK_USE_FILE})
+    add_definitions(-DBOOST_ERROR_CODE_HEADER_ONLY)#解决了undefined reference to `boost::system::detail::generic_category_ncx()
+endif (PCL_FOUND)
+#fade2d库相关内容
+set(Fade_DIR E:/fadeRelease_v1.78/)
+set(Fade_lib_DIRS  E:/fadeRelease_v1.78/x64)
+include_directories(${Fade_DIR})
+link_directories(${Fade_lib_DIRS})
+
+include_directories(${PROJECT_SOURCE_DIR}/include)
+aux_source_directory(./src SrcFiles)
+
+add_executable(Groundseg ${SrcFiles})
+target_link_libraries(Groundseg ${OpenCV_LIBRARIES} ${PCL_LIBRARIES} fade25D_x64_v141_Debug.lib) 

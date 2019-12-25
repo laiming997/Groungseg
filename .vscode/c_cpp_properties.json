@@ -1,0 +1,29 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "D:/opencv4.1.2/opencv/build/include",
+                "E:/fadeRelease_v1.78",
+                "E:/PCL 1.9.1/include/pcl-1.9",
+                "E:/PCL 1.9.1/3rdParty/Boost/include/boost-1_68",
+                "E:/PCL 1.9.1/3rdParty/FLANN/include",
+                "E:/PCL 1.9.1/3rdParty/Eigen/eigen3",
+                "E:/PCL 1.9.1/3rdParty/VTK/include/vtk-8.1",
+                "E:/Windows Kits/10/Include/10.0.17763.0/ucrt",
+                "${workspaceFolder}/include"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE"
+            ],
+            "compilerPath": "E:\\visual_studio2017\\VC\\Tools\\MSVC\\14.16.27023\\bin\\Hostx64\\x64\\cl.exe",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "msvc-x64"
+        }
+    ],
+    "version": 4
+}
