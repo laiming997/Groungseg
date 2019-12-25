@@ -88,6 +88,8 @@ std::tuple<pcl::PointXYZL**, cv::Mat , int**> RasterProcessor::RasterProcess(){
             }
         }
     }
+    
+       // // 对格网内无点云落入的情况，进行八领域插值。
     for(int i = 0; i <rows+1; i++)
     {
         for(int j = 0; j <cols+1; j++)
@@ -126,6 +128,64 @@ std::tuple<pcl::PointXYZL**, cv::Mat , int**> RasterProcessor::RasterProcess(){
             }
         }
     }
+    
+    //将已经有高程的cell中的（x,y,z）形成一个点云，和一个投影到（x,y,1）中的点云，通过投影点云，kdtree寻找最近的点，进行剩余cell的插值
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_project(new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_interpolation(new pcl::PointCloud<pcl::PointXYZ>);
+    for(int i = 0; i <rows+1; i++)
+    {
+        for(int j = 0; j <cols+1; j++)
+        {
+            if(lowraster[i][j].label != 0)
+            {
+                pcl::PointXYZ points(lowraster[i][j].x,lowraster[i][j].y,lowraster[i][j].z);
+                pcl::PointXYZ points_project(lowraster[i][j].x,lowraster[i][j].y,1.0);
+                cloud_project->push_back(points_project);
+                cloud_interpolation->push_back(points);
+            }
+        }
+    }
+    pcl::KdTreeFLANN<pcl::PointXYZ> kdtree;
+    kdtree.setInputCloud(cloud_project);
+    int K=8;
+    std::vector<int> pointIdxNKNSearch(K);
+    std::vector<float> pointNKNSquaredDistance(K);
+    for(int i = 0; i <rows+1; i++)
+    {
+        for(int j = 0; j <cols+1; j++)
+        {
+            if(lowraster[i][j].label == 0)
+            {
+                double x_nn = (j*grid_size)+pos_x_min;
+                double y_nn = (i*grid_size)+pos_y_min;
+                double z_nn = 0.0;
+                pcl::PointXYZ searchPoint(x_nn, y_nn,1.0);
+                if(kdtree.nearestKSearch(searchPoint,K,pointIdxNKNSearch,pointNKNSquaredDistance) > 0)
+                {
+                    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_NKNSearch(new pcl::PointCloud<pcl::PointXYZ>);
+                    pcl::copyPointCloud(*cloud_interpolation,pointIdxNKNSearch,*cloud_NKNSearch);
+                    double dis_thresh = std::numeric_limits<double>::max();
+                    for (int ii = 0; ii < cloud_NKNSearch->size(); ii++)
+                    {
+                        double dis = sqrt(SQUARE_DIST(x_nn,y_nn,cloud_NKNSearch->at(ii).x,cloud_NKNSearch->at(ii).y));
+                        if(dis_thresh >dis)
+                        {
+                            dis_thresh = dis;
+                            z_nn = cloud_NKNSearch->at(ii).z;
+                        }
+                    }
+                }
+                if(z_nn != 0)
+                {
+                    lowraster[i][j].label = 3;//插值获得
+                    lowraster[i][j].x = x_nn;
+                    lowraster[i][j].y = y_nn;
+                    lowraster[i][j].z = z_nn;
+                }
+            }
+        }
+    }
+    
     int lable_0 = 0, lable_1 = 0, lable_2 = 0, lable_3 = 0;
     for (int i = 0; i < rows+1; i++)
     {
@@ -139,11 +199,11 @@ std::tuple<pcl::PointXYZL**, cv::Mat , int**> RasterProcessor::RasterProcess(){
     }
     printf("lable_0:%d lable_1:%d lable_2:%d,lable_3:%d\n",lable_0,lable_1,lable_2,lable_3);
     cv::Mat rasterize(rows,cols,CV_32FC1,cv::Scalar(0.0));
-    for (int i = 0; i < rows+1; i++)
+    for (int i = 0; i < rows; i++)
     {
-        for (int j = 0; j < cols+1; j++)
+        for (int j = 0; j < cols; j++)
         {
-            if(lowraster[i][j].label != 0) rasterize.at<float>(i,j) = lowraster[i][j].z;
+            if(lowraster[i][j].label !=0 && lowraster[i][j].x!= 0 && lowraster[i][j].z != 0) rasterize.at<float>(i,j) = lowraster[i][j].z;
         }   
     }
 

@@ -25,6 +25,7 @@ public:
     Params params;
     std::vector<cv::Point3f> ExtractSeedByPCL();
     std::tuple<std::vector<cv::Point3f>,pcl::PointIndices> My_ExtractGroundSeed();
+    void MatVisualization(cv::Mat img_in);
     cv::Mat strelDisk(int Radius);
 public:
     Morphology();

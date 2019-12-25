@@ -108,13 +108,14 @@ std::tuple<std::vector<cv::Point3f>,pcl::PointIndices> Morphology::My_ExtractGro
         cv::Mat strl = cv::getStructuringElement(cv::MORPH_RECT,cv::Size(window_sizes[i],window_sizes[i]));//根据window_size获得数学形态法的滤波窗口
         cv::Mat dst;
         cv::morphologyEx(rasterize,dst,cv::MORPH_OPEN,strl);//进行开运算
+        // MatVisualization(rasterize);
         rasterize = dst.clone();
         int non_ground_num = 0;
         for (int ii = 0; ii < Raster_Process_obj->rows; ii++)
         {
             for (int jj = 0; jj < Raster_Process_obj->cols; jj++)
             {
-                if(abs(channel_blur.at<float>(ii,jj) - dst.at<float>(ii,jj))>height_thresholds[i])
+                if(abs(channel_blur.at<float>(ii,jj) - dst.at<float>(ii,jj))>height_thresholds[i] && dst.at<float>(ii,jj)!=0)
                 {
                     if(rasterInfo[ii][jj].index != -1 && rasterInfo[ii][jj].flag == 0)
                     {
@@ -143,7 +144,24 @@ std::tuple<std::vector<cv::Point3f>,pcl::PointIndices> Morphology::My_ExtractGro
     return std::make_tuple(vec3,gound_indices);
 }
 
-
+void Morphology::MatVisualization(cv::Mat img_in)
+{
+    double Max_pix=std::numeric_limits<double>::min();
+    double Min_pix=std::numeric_limits<double>::max();
+    
+    for (int i = 0; i < img_in.rows; i++)
+    {
+        for (int j = 0; j < img_in.cols; j++)
+        {
+            if(img_in.at<float>(i,j) > Max_pix )  Max_pix = img_in.at<float>(i,j);
+            else if(img_in.at<float>(i,j) < Min_pix ) Min_pix = img_in.at<float>(i,j);
+        }
+    }
+    img_in -= Min_pix;
+    img_in.convertTo(img_in,CV_8U,255.0/(Max_pix - Min_pix));
+    cv::imshow("img_in",img_in);
+    cv::waitKey(0);
+}
 
 
 cv::Mat Morphology::strelDisk(int Radius)

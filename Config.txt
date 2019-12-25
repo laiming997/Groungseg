@@ -1,7 +1,7 @@
 grid_size=0.25
 height_diff_threshold_init=0.5
-height_diff_threshold_max=4
-Max_window_size=36
+height_diff_threshold_max=1
+Max_window_size=28
 Terrian_slop=1.0
 angle_threshold=6
-distance_threshold=0.25
+distance_threshold=0.5

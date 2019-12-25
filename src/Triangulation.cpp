@@ -14,7 +14,7 @@ Triangulation::Triangulation(boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ>> c
     Distance_threshold(distance_threshold)
 {
     printf("TIN Iteration(angle threshold = %f, distance threshold = %f)...\n", Angle_threshold, Distance_threshold);
-    printf("the size of the input origin points: %zd\n", origin_cloud->size());
+    // printf("the size of the input origin points: %zd\n", origin_cloud->size());
 }
 
 
