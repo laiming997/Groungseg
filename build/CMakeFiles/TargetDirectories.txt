@@ -1,3 +1,0 @@
-E:/point_cloud/Groundseg/build/CMakeFiles/Groundseg.dir
-E:/point_cloud/Groundseg/build/CMakeFiles/edit_cache.dir
-E:/point_cloud/Groundseg/build/CMakeFiles/rebuild_cache.dir
